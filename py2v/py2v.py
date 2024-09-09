@@ -8,6 +8,7 @@ def py2v(func):
         flag_end_inst = 0
         new_func_code = []
         inst_code = []
+        # the generated verilog code.
         python_vars_dict = kwargs
         #dict_new = getcallargs(func, *args, **kwargs)
         #python_vars_dict_extend = locals()
@@ -17,8 +18,8 @@ def py2v(func):
         line_func_def = f"def func_new(*args, **kwargs): \n"
         for line in src_lines:
             i = i + 1
-            if i == 3 and not flag_end_inst:
-                key = 'param_top1'
+            if i == 3:
+                #key = 'param_top1'
                 #new_func_code.append(' ' * 4 + "param_top1 = kwargs['param_top1']\n")
                 # pass the keyword variables
                 for key in kwargs.keys():
@@ -30,8 +31,8 @@ def py2v(func):
                 new_func_code.append(line + '\n')
             elif STATE == 'IN_VERILOG_INLINE':
                 line_renew = processVerilogLine(stripped_line)
-                new_func_code.append(
-                    ' ' * (len(line) - len(stripped_line) - 1) + line_renew + '\n')
+                # new_func_code.append(
+                #     ' ' * (len(line) - len(stripped_line) - 1) + line_renew + '\n')
                 line_renew_str = processVerilogLine_str(stripped_line)
                 new_func_code.append(
                     ' ' * (len(line) - len(stripped_line) - 1) + line_renew_str + '\n')
@@ -50,6 +51,7 @@ def py2v(func):
                 n_blanks = len(line) - len(stripped_line)
                 line_inst_renew = processVerilog_inst_block(inst_code)
                 new_func_code.append(' ' * (n_blanks - 1) + line_inst_renew)
+                new_func_code.append(' ' * (n_blanks - 1) + f"v_declaration = v_declaration + {line_inst_renew}\n")
         # 将代码列表组合成字符串
         new_func_code.pop(0)
         new_func_code.pop(0)
@@ -63,13 +65,15 @@ def py2v(func):
         #L = local_vars
         #("Newly Assembled Function: \n")
         #print(new_func_body)
-        G = func.__globals__
+        #G = func.__globals__
         exec(new_func_body, func.__globals__, local_vars)  # 执行新函数代码
         func_new = local_vars['func_new']
         # kwargs['param_top1'] = 2
         # kwargs['param_top2'] = 4
         # print(**kwargs)
-        return func_new(*args, **kwargs)
+        verilog_code = func_new(*args, **kwargs)
+        print(verilog_code)
+        return verilog_code
     return decorated
 
 def convert(func):
@@ -125,6 +129,7 @@ def convert(func):
     local_vars = locals()
     #print(new_func_body)
     exec(new_func_body, globals(), local_vars)  # 执行新函数代码
+    print (local_vars['v_declaration'])
     return local_vars['v_declaration'] # 将重定义后的函数返回
 
 

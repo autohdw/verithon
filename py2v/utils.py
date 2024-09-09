@@ -52,7 +52,8 @@ def processVerilogLine_str(line):
             line = line.replace(name_str_extended, replace_str)
     idx = line.index('#/')
     line_cut = line[idx+2:]
-    line_cut_extend = "'" + line_cut + "'"
+    #line_cut_extend = "'" + line_cut +  + "'"
+    line_cut_extend = f"'{line_cut}\\n'"
     line_code_renew = 'v_declaration'+'='+'v_declaration'+'+'+line_cut_extend
     return line_code_renew
 
@@ -241,6 +242,7 @@ def state_transition(STATE_prev, line):
 
 def extract_vparam_ports(v_declaration):
     pattern = r'(?<=\().+?(?=\))'
+    v_declaration = v_declaration.replace('\n',' ')
     vparam_and_port_names = re.findall(pattern, v_declaration)
     vparam_names = vparam_and_port_names[0].replace(',',' ')
     port_names = vparam_and_port_names[1].replace(',',' ')
@@ -274,7 +276,7 @@ def instantiate_full(v_declaration, inst_code, local_var_dict):
             VPARAM_DICT_real[vparam_name] = PORT_DICT[cnt]
             cnt = cnt + 1
     v_code = instantiate(PORT_DICT_real, VPARAM_DICT_real, INST_NAME, MODULE_NAME)
-    print(v_code)
+    # print(v_code)
     return v_code
 
 def instantiate(ports_dict, vparams_dict, module_name, inst_name):
