@@ -1,5 +1,6 @@
 from utils import *
 from py2v import py2v
+from ModuleLoader import *
 
 @py2v
 def ModuleBasic(p1, p2):
@@ -53,7 +54,7 @@ def ModuleMUL(param1, param2, paramN):  # Params (called by the python script) a
     #/ endmodule
 
 @py2v
-def Module_TOP(param_top1,param_top2):
+def ModuleTOP(param_top1,param_top2):
     rst1 = 1
     rst2 = 2
     rstn = 3
@@ -89,7 +90,7 @@ def Module_TOP(param_top1,param_top2):
     #/ end of module TOP
     #/ endmodule
 
-Module_TOP(param_top1 = 2,param_top2 = 4)
+ModuleTOP(param_top1 = 2,param_top2 = 4)
 #print(v_declaration)
 # inst_code =   ['        #/ INST: \n\n', '        #/ PARAMS: \n\n', '        #/ param1 : 1\n\n', '        #/ param2 : 2', '#/ param3 : 3\n\n', '        #/ VPARAMS: \n\n', '        #/ vparam1 : 3\n\n', '        #/ vparam2 : 4\n\n','        #/ vparam3 : 5\n\n', '        #/ INST_NAME: MUL1\n\n', '        #/ MODULE_NAME: MUL\n\n']
 # [X,Y,Z,W,P] = parseVerilog_inst_block(inst_code, ())locals

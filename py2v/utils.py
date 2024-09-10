@@ -285,7 +285,7 @@ def instantiate(ports_dict, vparams_dict, module_name, inst_name):
         # ports
         ports_str = ", ".join([f".{key}({value})" for key, value in ports_dict.items()])
         # generate verilog code for instantiation
-        verilog_code = f"{module_name} #({params_str}) {inst_name} ({ports_str});\n"
+        verilog_code = f"{inst_name} #({params_str}) {module_name} ({ports_str});\n"
         # print verilog code for instantiation
         return verilog_code
 

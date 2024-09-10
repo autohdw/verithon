@@ -26,47 +26,57 @@ def processVerilogLine(line, python_vars_dict):
             line = line.replace(name_str_extended, python_var_value)
     idx = line.index('#!')
     line_cut = line[idx+2:]
-    line_renew = 'f.write('+"'"+line_cut+ "'" +')'
+    line_renew = 'print('+"'"+line_cut+ "'" +')'
     return line_renew
 
 def convert(func):
-    new_func_code = [];
-    @wraps(func)
+
+    #A = getcallargs(func)
+    #@wraps(func)
     def decorated(*args, **kwargs):
+        new_func_code = []
         python_vars_dict = kwargs
         #dict_new = getcallargs(func, *args, **kwargs)
         #python_vars_dict_extend = locals()
         src_lines, starting_line = inspect.getsourcelines(func)
+        line_func_def = f"def func_new(*args, **kwargs): \n"
+        L = locals()
         for line in src_lines:
             stripped_line = line.strip()
             if isVerilogLine(stripped_line):
                line_renew = processVerilogLine(stripped_line, python_vars_dict)
                #print(line_renew)
-               new_func_code.append(' ' * (len(line) - len(stripped_line) - 1) +"with open('C:\信道编码\AutoGeneration\PyTV_new\\test.txt','w') as f:"+'\n')
+               #new_func_code.append(' ' * (len(line) - len(stripped_line) - 5) +"with open('C:\信道编码\AutoGeneration\PyTV_new\\test.txt','w') as f:"+'\n')
                new_func_code.append(
-                ' ' * (len(line) - len(stripped_line) + 1) + line_renew + '\n')
+                ' ' * (len(line) - len(stripped_line) - 1) + line_renew + '\n')
             else:
                 new_func_code.append(line + '\n')
         # 将代码列表组合成字符串
-        new_func_body = ''.join(new_func_code[1:])  # 从第三行开始，因为前两行是函数定义
+        new_func_code.pop(0)
+        new_func_code.pop(0)
+        new_func_code.insert(0, line_func_def)
+        new_func_code.append("    return 100")
+        new_func_body = ''.join(new_func_code[0:])  # 从第三行开始，因为前两行是函数定义
         # 在当前局部作用域定义一个新的函数执行环境
+
         local_vars = {}
         #G = func. __globals__
         #L = local_vars
+        print(new_func_body)
+        G = func.__globals__
         exec(new_func_body, func.__globals__, local_vars)  # 执行新函数代码
-        return func(*args, **kwargs)
+        func_new = local_vars['func_new']
+        return func_new(*args, **kwargs)
     return decorated
 
 @convert
 def test_function(DWT1, DWT2):
     print("Start to Generate RTL Code \n")  # Normal function code start
-    for i in range(3):
-
-        #! module M(rst,A_in,B_in,C_out)
-        #! input [{DWT1}:0] A_in
-        #! input [{DWT2}:0] B_in
-        #! output [10:0] C_out
-        #! endmodule
-        continue
+    #! module M(rst,A_in,B_in,C_out)
+    #! input [{DWT1}:0] A_in
+    #! input [{DWT2}:0] B_in
+    #! output [10:0] C_out
+    #! endmodule
     print("Generating Done \n")
-test_function(DWT1 = 10, DWT2=5)
+P = test_function(DWT1 = 10, DWT2=5)
+print(P)

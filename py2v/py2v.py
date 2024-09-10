@@ -1,10 +1,16 @@
 
 from utils import *
+from ModuleLoader import *
 def py2v(func):
     #A = getcallargs(func)
     #@wraps(func)
     def decorated(*args, **kwargs):
         STATE = 'IN_PYTHON'
+        func_name = func.__name__
+        abstract_module_name = func_name[6:]
+
+        #print(abstract_module_name)
+        #print(func_name)
         flag_end_inst = 0
         new_func_code = []
         inst_code = []
@@ -72,67 +78,10 @@ def py2v(func):
         # kwargs['param_top2'] = 4
         # print(**kwargs)
         verilog_code = func_new(*args, **kwargs)
-        print(verilog_code)
+        # print(verilog_code)
+        ModuleLoader_Singleton.generate_module(abstract_module_name, python_vars_dict, verilog_code)
         return verilog_code
     return decorated
-
-def convert(func):
-    # Initalize the state machine
-    STATE = 'IN_PYTHON'
-
-    src_lines, starting_line = inspect.getsourcelines(func)
-    new_func_code = []
-    inst_code = []
-    i = 0
-    flag_end_inst = 0
-    for line in src_lines:
-        i = i + 1
-        if i == 3 and not flag_end_inst:
-            new_func_code.append(' '*3 + 'v_declaration = str()\n')
-        stripped_line = line.strip()
-        STATE = state_transition(STATE, stripped_line)
-        if STATE == 'IN_PYTHON':
-            line = line.lstrip("    ")
-            new_func_code.append(line + '\n')
-        elif STATE == 'IN_VERILOG_INLINE':
-            line_renew = processVerilogLine(stripped_line)
-            new_func_code.append(
-                ' ' * (len(line) - len(stripped_line) - 5) + line_renew + '\n')
-            line_renew_str = processVerilogLine_str(stripped_line)
-            new_func_code.append(
-                ' ' * (len(line) - len(stripped_line) - 5) + line_renew_str + '\n')
-        elif STATE == 'BEGIN_VERILOG_INST':
-            flag_end_inst = 1
-            inst_code.append(line + '\n')
-        elif STATE == 'IN_VERILOG_INST':
-            if not isVerilogLine(line):
-                inst_line_renew = processVerlog_inst_line(line)
-                new_func_code.append(inst_line_renew)
-            else:
-                inst_code.append(line + '\n')
-        elif STATE == 'END_VERILOG_INST':
-            stripped_line = line.strip()
-            n_blanks = len(line) - len(stripped_line)
-            line_inst_renew = processVerlog_inst_line(inst_code)
-            new_func_code. append(' ' * (n_blanks - 1) + line_inst_renew)
-            #obj_code, inst_code = processVerilog_inst_block(inst_code)
-            #new_func_code.append(
-                #' ' * (len(line) - len(stripped_line) - 1) + obj_code )
-            #new_func_code.append(
-                #' ' * (len(line) - len(stripped_line) - 1) + inst_code)
-
-    # new_func_code.append('return v_declaration')
-    # Reassemble the code lines to form a new function
-    new_func_body = ''.join(new_func_code[3:])  # 从第三行开始，因为前两行是函数定义
-    #print(new_func_body)
-    # Execute newly assembled function
-    local_vars = locals()
-    #print(new_func_body)
-    exec(new_func_body, globals(), local_vars)  # 执行新函数代码
-    print (local_vars['v_declaration'])
-    return local_vars['v_declaration'] # 将重定义后的函数返回
-
-
 # @py2v
 # def testfunc1(A,B):
 #     pass
