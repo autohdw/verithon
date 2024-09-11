@@ -1,11 +1,18 @@
 import os
 
 class ModuleLoader:
-    def __init__(self, root_dir):
+    __isinstance = False
+    def __init__(self, root_dir): 
         self.root_dir = root_dir
         self.abstract_module_list = []
         self.module_file_name_list = []
     
+    def __new__(cls, *args, **kwargs):
+        if cls.__isinstance:
+            return cls.__isinstance
+        cls.__isinstance = object.__new__(cls)
+        return cls.__isinstance
+
     # load the module based on the abstract module name and the parameter value
     # returns a boolean value to indicate whether the module is already generated or not, and the module file name
     def load_module(self,abstract_module_name,module_param_dict):
@@ -31,7 +38,8 @@ class ModuleLoader:
         moduleGenerated = False
         moduleExists, module_file_name = self.load_module(abstract_module_name,module_param_dict)
         if not moduleExists:
-            with open(self.root_dir + "\\" + module_file_name + ".v","w") as f:
+            vfile_path = os.path.join(self.root_dir, module_file_name + ".v")
+            with open(vfile_path,"w") as f:
                 f.write(module_verilog_code)
             moduleGenerated = True
             print(f"Writing into module file {module_file_name}.v \n")
@@ -39,4 +47,9 @@ class ModuleLoader:
         
 current_file_dir = os.path.dirname(os.path.abspath(__file__))
 # create a singleton instance of the ModuleLoader class
-ModuleLoader_Singleton = ModuleLoader(f"{current_file_dir}\\RTL")
+v_file_dir = os.path.join(current_file_dir,"RTL")
+ModuleLoader_Singleton = ModuleLoader(v_file_dir)
+# ModuleLoader_Singleton1 = ModuleLoader("2")
+
+print(ModuleLoader_Singleton)
+# print(ModuleLoader_Singleton1)
