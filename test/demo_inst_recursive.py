@@ -1,8 +1,8 @@
-from utils import *
-from py2v import py2v
-from ModuleLoader import *
+from voldelog.utils import *
+from voldelog.voodoo import voodoo
+from voldelog.ModuleLoader import *
 
-@py2v
+@voodoo
 def ModuleBasic(p1, p2):
     #/ module BASIC #(vparamB1, vparamB2, vparamBN)(
     if p1 > 0:
@@ -18,7 +18,7 @@ def ModuleBasic(p1, p2):
     #/ endmodule
 
 
-@py2v
+@voodoo
 def ModuleMUL(param1, param2, paramN):  # Params (called by the python script) are placed in the python function definition.
     #/ module MUL #(vparam1, vparam2, vparamN)(
     if param1 > 0:
@@ -53,7 +53,7 @@ def ModuleMUL(param1, param2, paramN):  # Params (called by the python script) a
     #/ end of module MUL
     #/ endmodule
 
-@py2v
+@voodoo
 def ModuleTOP(param_top1,param_top2):
     rst1 = 1
     rst2 = 2

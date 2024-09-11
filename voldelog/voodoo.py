@@ -1,7 +1,7 @@
 
-from utils import *
-from ModuleLoader import *
-def py2v(func):
+from voldelog.utils import *
+from voldelog.ModuleLoader import *
+def voodoo(func):
     #A = getcallargs(func)
     #@wraps(func)
     def decorated(*args, **kwargs):
@@ -82,13 +82,13 @@ def py2v(func):
         ModuleLoader_Singleton.generate_module(abstract_module_name, python_vars_dict, verilog_code)
         return verilog_code
     return decorated
-# @py2v
+# @voodoo
 # def testfunc1(A,B):
 #     pass
 #
 #
 #
-# @py2v
+# @voodoo
 # def simpletestfunc(M,N):
 #     C = testfunc1(1,2)
 #     #/ verilog BBB

@@ -202,7 +202,7 @@ def state_transition(STATE_prev, line):
                 line_strip = line_without_note.strip()
                 if line_strip.startswith('INST:'):
                     STATE = 'BEGIN_VERILOG_INST'
-                    raise Exception("Error: Nested verilog instance block is not supported in the current PyTv version.")
+                    raise Exception("Error: Nested verilog instance block is not supported in the current voodoo version.")
                 elif line_strip.startswith('ENDINST'):
                     STATE = 'END_VERILOG_INST'
                 else:
@@ -218,7 +218,7 @@ def state_transition(STATE_prev, line):
                 line_strip = line_without_note.strip()
                 if line_strip.startswith('INST:'):
                     STATE = 'BEGIN_VERILOG_INST'
-                    raise Exception("Error: Nested verilog instance block is not supported in the current PyTv version.")
+                    raise Exception("Error: Nested verilog instance block is not supported in the current voodoo version.")
                 elif line_strip.startswith('ENDINST'):
                     STATE = 'END_VERILOG_INST'
                 else:
