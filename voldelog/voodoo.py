@@ -21,7 +21,7 @@ def voodoo(func):
         src_lines, starting_line = inspect.getsourcelines(func)
         i = 0
         # definition of the newly generated function for producing v_declaration code
-        line_func_def = f"def func_new(*args, **kwargs): \n"
+        line_func_def = f"def func_new(*args, **kwargs): \n    from voldelog.utils import instantiate_full \n"
         for line in src_lines:
             i = i + 1
             if i == 3:
@@ -72,30 +72,17 @@ def voodoo(func):
         #("Newly Assembled Function: \n")
         #print(new_func_body)
         #G = func.__globals__
+
         exec(new_func_body, func.__globals__, local_vars)  # 执行新函数代码
         func_new = local_vars['func_new']
         # kwargs['param_top1'] = 2
         # kwargs['param_top2'] = 4
-        # print(**kwargs)
+        # print(**kwargs) 
         verilog_code = func_new(*args, **kwargs)
         # print(verilog_code)
         ModuleLoader_Singleton.generate_module(abstract_module_name, python_vars_dict, verilog_code)
         return verilog_code
     return decorated
-# @voodoo
-# def testfunc1(A,B):
-#     pass
-#
-#
-#
-# @voodoo
-# def simpletestfunc(M,N):
-#     C = testfunc1(1,2)
-#     #/ verilog BBB
-#     print("C: \n")
-#     print(C)
-#
-#
-# simpletestfunc(1,1)
+
 
 

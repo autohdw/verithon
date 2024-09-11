@@ -1,6 +1,7 @@
-from voldelog.utils import *
-from voldelog.voodoo import voodoo
-from voldelog.ModuleLoader import *
+
+from voldelog import voodoo
+
+
 
 @voodoo
 def ModuleBasic(p1, p2):
@@ -18,11 +19,13 @@ def ModuleBasic(p1, p2):
     #/ endmodule
 
 
+
+
 @voodoo
 def ModuleMUL(param1, param2, paramN):  # Params (called by the python script) are placed in the python function definition.
     #/ module MUL #(vparam1, vparam2, vparamN)(
     if param1 > 0:
-       #/ port1,
+       #/ param1,
        pass
     if param2 > 0:
        #/ port2,
@@ -46,6 +49,8 @@ def ModuleMUL(param1, param2, paramN):  # Params (called by the python script) a
     #/ MODULE_NAME: BASIC
     #/ INST_NAME: BASIC1
     #/ ENDINST
+
+
 
     # vparams and ports are declared with verilog lines
     #/ start of module MUL

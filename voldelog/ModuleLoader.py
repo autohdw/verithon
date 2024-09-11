@@ -1,9 +1,14 @@
 import os
 
+
 class ModuleLoader:
     __isinstance = False
     def __init__(self, root_dir): 
         self.root_dir = root_dir
+
+        if not os.path.exists(self.root_dir):
+            os.makedirs(self.root_dir)
+
         self.abstract_module_list = []
         self.module_file_name_list = []
     
@@ -46,10 +51,7 @@ class ModuleLoader:
         return moduleGenerated
         
 current_file_dir = os.path.dirname(os.path.abspath(__file__))
-# create a singleton instance of the ModuleLoader class
+ 
 v_file_dir = os.path.join(current_file_dir,"RTL")
 ModuleLoader_Singleton = ModuleLoader(v_file_dir)
-# ModuleLoader_Singleton1 = ModuleLoader("2")
-
-print(ModuleLoader_Singleton)
-# print(ModuleLoader_Singleton1)
+ 
