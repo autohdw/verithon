@@ -9,8 +9,8 @@ setup(
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
     author='JiaYan Xu',
-    author_email='jiayanxu@.com',
-    url='https://github.com/yourusername/simplemath',
+    author_email='jiayanxu@seu.edu.cn',
+    url='https://github.com/autohdw/Voldelog.git',
     license='MIT',
     python_requires='>=3.6',
 )
