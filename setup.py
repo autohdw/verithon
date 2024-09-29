@@ -1,12 +1,16 @@
+# setup.py
 from setuptools import setup, find_packages
 
 setup(
-    name='pytv',
-    version='0.1.0',
+    name='PyTV',
+    version='0.1',
     packages=find_packages(),
-    entry_points={
-        'console_scripts': [
-            'pytv=src.main:main',  # "myhello" 是命令行工具的名称，"myhello.hello:main" 指 myhello 包里的 hello.py 文件中的 main 函数
-        ],
-    },
+    description='RTL Auto-generation with Verilog Embedded in Python',
+    long_description=open('README.md').read(),
+    long_description_content_type='text/markdown',
+    author='JiaYan Xu',
+    author_email='jiayanxu@seu.edu.cn',
+    url='https://github.com/autohdw/Voldelog.git',
+    license='MIT',
+    python_requires='>=3.6',
 )
