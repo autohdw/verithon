@@ -92,7 +92,7 @@ Meaning of each command line argument is presented below:
 
 2. `--root_dir`
    - **Meaning**: Specifies the path where RTL files will be saved.
-   - **Possible Values**: Any valid folder path. If not provided, a file dialog will pop up for user selection.
+   - **Possible Values**: Any valid folder path. The user must either pass this argument in command line or set moduleloader.root_dir with api functions. Otherwise, exceptions will be raised and RTL code generation will not start.
 
 3. `--flag_save_param`
    - **Meaning**: Indicates whether to save the parameter file.
