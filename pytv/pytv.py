@@ -1,5 +1,5 @@
-from utils_new import *
-from ModuleLoader import *
+from pytv.utils import *
+from pytv.ModuleLoader import *
 # the decorator replaces func with a newly defined function decorated(*args, **kwargs)
 def pytv(func):
     #A = getcallargs(func)

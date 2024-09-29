@@ -6,7 +6,7 @@ from inspect import getcallargs
 import warnings
 import json
 import hashlib
-from ModuleLoader import *
+from pytv.ModuleLoader import *
 
 # Warning COLOR Setings
 RED = "\033[31m"

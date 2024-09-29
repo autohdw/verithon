@@ -1,4 +1,4 @@
-from pytv_new import *
+from pytv import *
 
 @pytv
 def ModuleBasic(p1, p2):
@@ -97,7 +97,7 @@ def ModuleTOP(param_top1,param_top2):
 # you can manually call api to set naming mode, save dir, and disable warnings or enable params saving,
 # if you do not like command line
 moduleloader.set_naming_mode("SEQUENTIAL")
-moduleloader.set_root_dir("C:\信道编码\SummerSchool\提交")
+moduleloader.set_root_dir("./rtl")
 moduleloader.saveParams()
 moduleloader.disEnableWarning()
 
