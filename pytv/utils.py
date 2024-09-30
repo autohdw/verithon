@@ -6,7 +6,9 @@ from inspect import getcallargs
 import warnings
 import json
 import hashlib
-from pytv.ModuleLoader import *
+from pytv.ModuleLoader import moduleloader
+from pytv.ModuleLoader import ModuleLoader_Singleton
+from pytv.ModuleLoader import ModuleLoader
 
 # Warning COLOR Setings
 RED = "\033[31m"
@@ -163,7 +165,7 @@ def processVerlog_inst_line(inst_line):
     n_blanks = len(inst_line) - len(inst_line_strip)
     # print(n_blanks)
     inst_line_renew0 = " " * (n_blanks-1) + inst_line_strip + "\n"
-    inst_line_renew1 = " " * (n_blanks-1) + 'v_inst_code_in, v_declaration_in, module_dict_tree_in, module_file_name_in = '+ 'ModuleLoader_Singleton.extract_module_inst_info()' + "\n"
+    inst_line_renew1 = " " * (n_blanks-1) + 'v_inst_code_in, v_declaration_in, module_dict_tree_in, module_file_name_in = '+ 'moduleloader.extract_module_inst_info()' + "\n"
     inst_line_renew2 = " " * (n_blanks-1) + f"v_module_dict_list.append(module_dict_tree_in) \n"
     inst_line_renew3 = " " * (n_blanks-1) + f"v_declaration = v_declaration + v_inst_code_in \n"
     inst_line_renew = inst_line_renew0 + inst_line_renew1 + inst_line_renew2 + inst_line_renew3
