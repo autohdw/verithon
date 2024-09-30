@@ -1,6 +1,9 @@
-from pytv import *
+import pytv
+from pytv import convert
+from pytv import moduleloader
+# from pytv import ModuleLoader_Singleton
 
-@pytv
+@convert
 def ModuleBasic(p1, p2):
     #/ module BASIC(
     if p1 > 0:
@@ -16,7 +19,7 @@ def ModuleBasic(p1, p2):
     #/ endmodule
 
 
-@pytv
+@convert
 def ModuleMUL(param1, param2, paramN, **kwargs):  # Params (called by the python script) are placed in the python function definition.
     #/ module MUL(
     if param1 > 0:
@@ -42,7 +45,7 @@ def ModuleMUL(param1, param2, paramN, **kwargs):  # Params (called by the python
     #/ end of MUL
     #/ endmodule
 
-@pytv
+@convert
 def ModuleTOP(param_top1,param_top2):
     rst1 = 1
     rst2 = 2
@@ -97,15 +100,12 @@ def ModuleTOP(param_top1,param_top2):
 # you can manually call api to set naming mode, save dir, and disable warnings or enable params saving,
 # if you do not like command line
 moduleloader.set_naming_mode("SEQUENTIAL")
-moduleloader.set_root_dir("./rtl")
+moduleloader.set_root_dir(".\RTL")
 moduleloader.saveParams()
 moduleloader.disEnableWarning()
 
 # Call module functions to generate RTL code
 ModuleTOP(param_top1 = 20,param_top2 = 4)
-#print(v_declaration)
 
-#print(v_declaration)
-import re
 
 
