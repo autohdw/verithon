@@ -2,13 +2,13 @@
 from setuptools import setup, find_packages
 
 setup(
-    name='PyTV',
+    name='verithon',
     version='0.1',
     packages=find_packages(),
     description='RTL Auto-generation with Verilog Embedded in Python',
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
-    author='JiaYan Xu',
+    author='JiaYanXu',
     author_email='jiayanxu@seu.edu.cn',
     url='https://github.com/autohdw/Voldelog.git',
     license='MIT',
