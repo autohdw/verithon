@@ -10,12 +10,12 @@
 ### Defining a Verilog Module with PyTV
 1. Every definition of a verilog module is written in magic comments and embodied in the definition of a **python function**.
    - The name of the python function must start with `Module`. The function name is formulated as `Module_abstract_module_name`. In the current PyTV version, please **do not** define a normal function whose name start with `Module`. Also, the module function definition should be written in a **single** line. (We prepare to solve these 2 issues in future releases)
-   - Every module function should be decorated with pytv using `@pytv`. Please write `@pytv` only in the line above each module function definition.
+   - Every module function should be decorated with pytv using `@convert`. Please write `@convert` only in the line above each module function definition.
    - The parameters of the python function can be of any data type.
    - The function must **not** have any return value (We will support module functions with return values in future releases).
    - -Below is a very short definition of a verilog module using PyTV
      ``` python
-        @pytv
+        @convert
         def ModuleBasic(p1, p2):
             #/ module BASIC(
             if p1 > 0:
@@ -75,13 +75,26 @@ PyTV enables auto naming of modules, module files and instances. Auto-naming is 
    - generated instance name: `Basic0000000001  u_0000000002_Basic0000000001` (This is 2nd time that the module function ModuleBasic is called with the same python layer params)
 
 ## Running pytv for generating RTL code
+### Install pytv with pip
+We have renamed this package as `verithon`. Run the following command to install:
+```shell
+pip install verithon
+```
+
+### Import Modules
+You should import `moduleloader` and `convert` when you want to use pytv. You should write:
+``` python
+import pytv
+from pytv import convert
+from pytv import moduleloader
+```
 ### Run with command line
 You can run pytv with the following shell script:
 ```shell
 cd "C:\your\path"
 python your_pytv_file.py --naming_mode HASH --root_dir "C:\your\root_dir" --flag_save_param --disable_warning
 ```
-### Configuration command line arguments
+### Configuring command line arguments
 Meaning of each command line argument is presented below:
 1. `--naming_mode`
    - **Meaning**: Sets the naming mode for the RTL files.
