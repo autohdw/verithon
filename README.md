@@ -54,7 +54,7 @@ PyTV enables auto naming of modules, module files and instances. Auto-naming is 
 #### Setting naming mode
 1. PyTV provides an api for specifying naming mode:
    ```python
-       pytv.set_naming_mode("SEQUENTIAL")
+       moduleloader.set_naming_mode("SEQUENTIAL")
    ```
 3. You can also set naming mode by passing args in command line:
    ```shell
