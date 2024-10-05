@@ -10,27 +10,21 @@ from pytv.ModuleLoader import moduleloader
 from pytv.ModuleLoader import ModuleLoader_Singleton
 from pytv.ModuleLoader import ModuleLoader
 
+
 # Warning COLOR Setings
 RED = "\033[31m"
 RESET = "\033[0m"
 
 def extract_function_calls(line):
-    """
-    检查输入的一行代码中是否有函数调用，并返回所有函数名。
-
-    :param line: 输入的代码行
-    :return: 一个包含函数名的列表，如果没有返回空列表
-    """
-    # 使用正则表达式匹配函数调用
-    # 这里匹配格式：函数名(参数)
     pattern = r'\b(\w+)\s*\('
     matches = re.findall(pattern, line)
+    return matches
 
-    return matches  # 返回所有匹配的函数名
 def isVerilogLine(line):
     line = line.strip()
     pattern = '^#/'
     return bool(re.match(pattern, line))
+
 def isModuleFunc(line):
     is_mf = False
     # for mf_name in ModuleLoader_Singleton.module_func_list:
@@ -42,6 +36,8 @@ def isModuleFunc(line):
     func_names = []
     func_name = str()
     if "def" in line:
+        return is_mf
+    if line.startswith('#'):
         return is_mf
     func_names = extract_function_calls(line)
     if len(func_names) > 0:
@@ -263,10 +259,20 @@ def extract_vparam_ports(v_declaration):
     port_names = str()
     vparam_names = []
     vparam_and_port_names = re.findall(pattern, v_declaration)
-    port_names = vparam_and_port_names[0].replace(',',' ')
+    if not vparam_and_port_names:
+        vparam_names = []
+        port_names = []
+        return vparam_names, port_names
+    port_names = vparam_and_port_names[0].strip()
+    if not port_names:
+        vparam_names = []
+        port_names = []
+        return vparam_names, port_names
+    segments = port_names.split(',')
+    last_words = [segment.strip().split()[-1] for segment in segments if segment.strip()]
     #port_names = vparam_and_port_names[1].replace(',',' ')
     #vparam_names = vparam_names.split()
-    port_names = port_names.split()
+    port_names = last_words
     return vparam_names, port_names
 
 
@@ -281,26 +287,23 @@ def instantiate_full(v_declaration, kwargs, module_file_name_in,inst_idx_str):
     # Exit function if it represents the top module
     if (isTOP):
         return v_code, MODULE_NAME
-    if (len(vparams_names) != len(VPARAM_DICT)) or (len(ports_names) != len(PORT_DICT)):
-        raise Exception("Module Instantiation: Dimension of input ports/vparams do not match the required dimension")
+    if not isinstance(PORT_DICT,dict):
+        if not isinstance(PORT_DICT,list):
+            raise Exception(f"Module Instantiation: PORTS argument must receive a dict or list")
+            pass
+    if (len(vparams_names) < len(VPARAM_DICT)) or (len(ports_names) < len(PORT_DICT)):
+        raise Exception(f"Module Instantiation: Not enough ports to connect. Expected {len(PORT_DICT)}, got {len(ports_names)}")
         pass
     if isinstance(PORT_DICT, dict):
         PORT_DICT_real = PORT_DICT
     elif isinstance(PORT_DICT, list):
         cnt = 0
         for port_name in ports_names:
+            if cnt == len(PORT_DICT):
+                break
             PORT_DICT_real[port_name] = PORT_DICT[cnt]
             cnt = cnt + 1
-    if isinstance(VPARAM_DICT, dict):
-        VPARAM_DICT_real = VPARAM_DICT
-    elif isinstance(PORT_DICT, list):
-        cnt = 0
-        for vparam_name in vparams_names:
-            VPARAM_DICT_real[vparam_name] = PORT_DICT[cnt]
-            cnt = cnt + 1
     v_code = instantiate(PORT_DICT_real, VPARAM_DICT_real, INST_NAME, MODULE_NAME)
-    # print(v_code)
-    # print(MODULE_NAME)
     return v_code, MODULE_NAME
 
 def instantiate(ports_dict, vparams_dict, module_name, inst_name):
@@ -308,17 +311,11 @@ def instantiate(ports_dict, vparams_dict, module_name, inst_name):
         ports_str = str()
         verilog_code = str()
         # parameters
-        if len(vparams_dict) != 0:
-            params_str = ", ".join([f".{key}({value})" for key, value in vparams_dict.items()])
-        # ports
-        ports_str = ", ".join([f".{key}({value})" for key, value in ports_dict.items()])
+        if len(ports_dict) > 0:
+            ports_str = ", ".join([f".{key}({value})" for key, value in ports_dict.items()])
         # generate verilog code for instantiation
-        if len(vparams_dict) != 0:
-            verilog_code = f"{inst_name} #({params_str}) {module_name} ({ports_str});\n"
-        else:
-            verilog_code = f"{inst_name}  {module_name}({ports_str});\n"
+        verilog_code = f"{inst_name}  {module_name}({ports_str});\n"
         # print verilog code for instantiation
-
         return verilog_code
 
 def replace_single_quotes(input_string, replacement):
@@ -338,22 +335,3 @@ def replace_single_quotes(input_string, replacement):
         i += 1
 
     return result
-
-
-# This function extracts the verilog parameters and ports from the verilog module definition
-# def extract_vparams_ports(src_lines):
-#     return 0
-
-# @convert
-# def test_function(DWT1, DWT2):
-#     print("Start to Generate RTL Code \n")
-#     for i in range(3):
-#         #! module M(rst,A_in,B_in,C_out)
-#         #! input [{DWT1}:0] A_in
-#         #! input [{DWT2}:0] B_in
-#         #! output [{i}:0] C_out
-#         #! endmodule
-#         continue
-#     print("Generating Done \n")
-#
-# test_function(DWT1 = 10, DWT2=5)
