@@ -6,6 +6,8 @@ import json
 import argparse
 import warnings
 import re
+import pickle
+import base64
 
 # ANSI 转义码 Warning颜色设置
 BLUE = "\033[1;34m" # 蓝色
@@ -17,12 +19,15 @@ class ModuleLoader:
         # if root dir is passed by the args input, then directly set root_dir
         # else let the user select root_dir with GUI
         self.root_dir = None
-        if not root_dir:
-            warnings.warn("No root directory is specified.")
+        # if not root_dir:
+        #     warnings.warn("No root directory is specified.")
         self.root_dir = root_dir
-        print(f"{BLUE}INFO:Root directory set as {self.root_dir}{RESET}")
+        if root_dir:
+            print(f"{BLUE}INFO:Root directory set as {self.root_dir}{RESET}")
         self.naming_mode = naming_mode
         self.flag_save_param = flag_save_param
+        if self.flag_save_param:
+            raise Exception("The current Verithon version has removed support for .json params saving")
         self.abstract_module_list = []
         self.module_func_list = []
         self.module_file_name_list = dict()
@@ -45,6 +50,8 @@ class ModuleLoader:
         self.concrete_module_name = str()
         self.add_cnt = 0
         self.disable_warning = disable_warning
+        self.module_params = dict()
+        self.nested_module_params = dict()
 
     def __new__(cls, *args, **kwargs):
         if cls.__isinstance:
@@ -65,11 +72,16 @@ class ModuleLoader:
     # returns a boolean value to indicate whether the module is already generated or not, and the module file name
     def load_module(self, abstract_module_name, module_param_dict):
         moduleExists = True
+        module_param_dict_cut = dict()
+        for key in module_param_dict.keys():
+            if (not key == "PORTS") and (not key == 'INST_NAME') and (not key == 'MODULE_NAME'):
+                module_param_dict_cut[key] = module_param_dict[key]
         abstractmoduleExists = abstract_module_name in self.abstract_module_list
         if not abstractmoduleExists:
             self.abstract_module_list.append(abstract_module_name)
             self.module_file_name_list[abstract_module_name] = []
             self.aux_module_file_name_list[abstract_module_name] = []
+            self.nested_module_params[abstract_module_name] = []
         module_file_name = abstract_module_name
         module_file_name, module_file_name_aux = self.generate_module_file_name(abstract_module_name, module_param_dict)
         # if self.naming_mode == 'HASH':
@@ -81,6 +93,8 @@ class ModuleLoader:
             self.aux_module_file_name_list[abstract_module_name].append(module_file_name_aux)
             self.module_file_name_list[abstract_module_name].append(module_file_name)
             self.inst_idx[module_file_name_aux] = 0
+            self.module_params[module_file_name] = module_param_dict_cut
+            self.nested_module_params[abstract_module_name].append({module_file_name:module_param_dict_cut})
         else:
             self.inst_idx[module_file_name_aux] += 1
             module_index = self.aux_module_file_name_list[abstract_module_name].index(module_file_name_aux)
@@ -93,7 +107,10 @@ class ModuleLoader:
         module_param_dict = dict()
         for key in module_param_dict_in.keys():
             if (not key == "PORTS") and (not key == 'INST_NAME') and (not key == 'MODULE_NAME'):
-                module_param_dict[key] = module_param_dict_in[key]
+                val_ori =  module_param_dict_in[key]
+                val_in_byte = pickle.dumps(val_ori)
+                val_in_str = base64.b64encode(val_in_byte).decode('utf-8')
+                module_param_dict[key] = module_param_dict_in[key] = val_in_str
         module_file_name = abstract_module_name
         naming_mode = self.naming_mode
         # module_param_dict.pop('INST_NAME', None)
@@ -188,6 +205,7 @@ class ModuleLoader:
     def set_root_dir(self, root_dir):
         self.root_dir = root_dir
         self.rtl_folder_path, self.param_folder_path = self.make_path()
+        print(f"{BLUE}INFO:Root directory set as {root_dir}{RESET}")
         print(f"{BLUE}INFO:RTL files will be saved at {self.rtl_folder_path}{RESET}")
         if self.flag_save_param:
            print(f"{BLUE}INFO:PARAM files will be saved at {self.param_folder_path}{RESET}")
@@ -211,6 +229,9 @@ class ModuleLoader:
         print(f"{BLUE}INFO:Saving PARAMS at {json_file_path}{RESET}")
 
     def add_module_func(self, module_func_name):
+        if "Module" not in module_func_name:
+            warnings.warn(f"The function '{module_func_name}' is decorated with converter but not prefixed with 'Module'")
+
         modulefuncExists = False
         if module_func_name in self.module_func_list:
             modulefuncExists = True
@@ -236,7 +257,10 @@ class ModuleLoader:
         self.disable_warning = True
 
     def saveParams(self):
+        raise Exception("The current Verithon version has removed support for .json params saving")
         self.flag_save_param = True
+
+
     def replace_module_name(self, verilog_code, new_module_name):
         # 正则表达式匹配模块定义
         pattern = r'module\s+(\w+)\s*'
@@ -250,6 +274,17 @@ class ModuleLoader:
             return updated_code
         else:
             return "Module Definition Not Found"
+
+    def getParams(self,module_name):
+        if module_name in self.nested_module_params.keys():
+            return self.nested_module_params[module_name]
+        elif module_name in self.module_params.keys():
+            return self.module_params[module_name]
+        if not self.disable_warning:
+            warnings.warn("The received key is neither an abstract module name nor a module file name")
+        return None
+
+
 
 
 # 解析命令行参数
