@@ -1,6 +1,4 @@
 import os
-# import tkinter as tk
-# from tkinter import filedialog
 import hashlib
 import json
 import argparse
@@ -9,9 +7,10 @@ import re
 import pickle
 import base64
 
-# ANSI 转义码 Warning颜色设置
-BLUE = "\033[1;34m" # 蓝色
-RESET = "\033[0m"  # 重置为默认颜色
+BLUE = "\033[1;34m" 
+RESET = "\033[0m"  
+
+
 class ModuleLoader:
     __isinstance = False
 
