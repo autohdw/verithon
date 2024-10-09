@@ -90,6 +90,8 @@ def ModuleTOP(param_top1,param_top2,Qu_inst, defaultp_top1=-29, defaultp_top2=Qu
             ModuleBasic(p1=1, p2=1, PORTS=inst_ports_dict)
             ModuleBasic(p1=rst1, p2=-10, PORTS=["PORTA"])
             ModuleBasic(p1=1, p2=15, PORTS=inst_ports_dict)
+            # Set OUTMODE='PRINT' to enable directly printing to the upper module and skip instantiation and module file generation
+            # We have not tested whether one can instantiate a module in this code directly passed to the upper module. This may corrupt the module/instance naming space.
             ModuleMyPrint(p=500,q=600,i=i,OUTMODE='PRINT')
     dwt = 3
     #/ reg_qu = reg[`Qu_inst.DWT`:0]
