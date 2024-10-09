@@ -23,7 +23,7 @@ def ModuleBasic(p1, p2):
 
 
 @convert
-def ModuleMUL(param1, param2, paramN, Qu_inst):  # Params (called by the python script) are placed in the python function definition.
+def ModuleMUL(param1, param2, paramN, Qu_inst, defaultp = 1):  # Params (called by the python script) are placed in the python function definition.
     #/ module MUL(
     if param1 > 0:
        #/ input reg[`paramN`:0] port1,
@@ -48,22 +48,31 @@ def ModuleMUL(param1, param2, paramN, Qu_inst):  # Params (called by the python 
     #/ end of MUL
     #/ endmodule
 
+# An example for directly printing verilog code in the upper module
 @convert
-def ModuleTOP(param_top1,param_top2,Qu_inst):
+def ModuleMyPrint(p,q,i,myQu = QuType(100,200)):
+    #/ reg [`p`:0] print_port1_`i`;
+    #/ reg [`q`:0] print_port2_`i`;
+    #/ reg [`myQu.DWT`:0] print_port_qu_`i`;
+    pass
+
+@convert
+def ModuleTOP(param_top1,param_top2,Qu_inst, defaultp_top1=-29, defaultp_top2=QuType(49,50)):
     rst1 = 1
     rst2 = 2
     rstn = 3
     inst_ports_list = []
     #/ module TOP(
     if param_top1 > 0:
-       #/ input reg [`rst1`:0] port_top1,
+       #/ input reg [`defaultp_top1`:0] port_top1,
        inst_ports_list.append('A_IN')
        pass
 
     if param_top2 > 0:
-       #/ port_top2,
+       #/ input reg [`defaultp_top2.DWT`:0] port_top2,
        inst_ports_list.append('B_IN')
        pass
+    #/
     #/ );
     if param_top1 > 0:
         inst_ports_dict = {'PORT1':'name_port1', 'PORT2':'name_port2'}
@@ -73,7 +82,7 @@ def ModuleTOP(param_top1,param_top2,Qu_inst):
         # Ports are passed in a list/dictionary to the "PORTS" argument. Can not pass a single string.
         # INST_NAME should be a string
         # We do not encourage manually setting INST_NAME and MODULE_NAME
-        ModuleMUL(param1 = 1, param2 = 1, paramN = 1, PORTS = ["my_mul_port1", "my_mul_port2","C"], INST_NAME = "mymul_inst",Qu_inst=Qu_inst)
+        ModuleMUL(param1 = defaultp_top1, param2 = 1, paramN = 1, PORTS = ["my_mul_port2","C","port4"], INST_NAME = "mymul_inst",Qu_inst=Qu_inst)
         my_Qu_inst_inner = QuType(1,2)
         for i in range (1,6):
             myFunc(1,2)
@@ -81,6 +90,7 @@ def ModuleTOP(param_top1,param_top2,Qu_inst):
             ModuleBasic(p1=1, p2=1, PORTS=inst_ports_dict)
             ModuleBasic(p1=rst1, p2=-10, PORTS=["PORTA"])
             ModuleBasic(p1=1, p2=15, PORTS=inst_ports_dict)
+            ModuleMyPrint(p=500,q=600,i=i,OUTMODE='PRINT')
     dwt = 3
     #/ reg_qu = reg[`Qu_inst.DWT`:0]
     codeLength = 32
@@ -104,6 +114,7 @@ def ModuleTOP(param_top1,param_top2,Qu_inst):
     #/ end of module TOP
     #/ endmodule
 
+
 # you can manually call api to set naming mode, save dir, and disable warnings or enable params saving,
 # if you do not like command line
 moduleloader.set_naming_mode("SEQUENTIAL")
@@ -113,7 +124,7 @@ moduleloader.disEnableWarning()
 
 my_Qu_inst_top = QuType(DWT=12, FRAC=6)
 # Call module functions to generate RTL code
-ModuleTOP(param_top1 = 20,param_top2 = 4, Qu_inst = my_Qu_inst_top)
+ModuleTOP(defaultp_top1=29, param_top1 = 20, defaultp_top2 = QuType(24,25), param_top2 = 4, Qu_inst = my_Qu_inst_top)
 
 # Use moduleloader api moduleloader.getParams(module_name) to acquire the python parameters of a specified module
 # The argument "module_name" can either be an abstract module name (such as MUL) or a generated module name (such as MUL0000000001)
@@ -125,5 +136,4 @@ print(f"params_of_top= {params_of_top}")
 print(f"params_of_mul = {params_of_mul}")
 print(f"params_of_basic = {params_of_basic}")
 print(f"params_of_mul1 = {params_of_mul1}")
-
 print(f"DWT={params_of_mul1['Qu_inst'].DWT}")
