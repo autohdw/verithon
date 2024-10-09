@@ -28,10 +28,25 @@ from pytv.ModuleLoader import ModuleLoader
 from pytv.ModuleLoader import ModuleLoader_Singleton
 from pytv.ModuleLoader import moduleloader
 # the decorator replaces func with a newly defined function decorated(*args, **kwargs)
+
+
 def convert(func):
     def decorated(*args, **kwargs):
+        flag_inst = True
+        if "OUTMODE" in kwargs.keys():
+            if kwargs["OUTMODE"] == "PRINT":
+                flag_inst = False
         STATE = 'IN_PYTHON'
         func_name = func.__name__
+        defaults = func.__defaults__
+        if defaults:
+            argnames = func.__code__.co_varnames[:func.__code__.co_argcount]
+            defaults_dict = dict(zip(argnames[-len(defaults):], defaults))
+            key_kwargs = kwargs.keys()
+            key_default = defaults_dict.keys()
+            for key_de in key_default:
+                if key_de not in key_kwargs:
+                    kwargs[key_de] = defaults_dict[key_de]
         abstract_module_name = func_name[6:]
         concrete_module_name = abstract_module_name
         # Add decorated func to the list in moduleloader
@@ -42,10 +57,15 @@ def convert(func):
         # the generated verilog code.
         python_vars_dict = kwargs
         src_lines, starting_line = inspect.getsourcelines(func)
+        src_lines = [l.rstrip() for l in src_lines]
         i = 0
         # definition of the newly generated function for producing v_declaration code
         line_func_def = f"def func_new(*args, **kwargs): \n"
         for line in src_lines:
+            # TEST:
+            # if "ModuleMUL" in line:
+            #     print("xxxxxxxxxxxx\n")
+            # TEST
             i = i + 1
             if i == 3:
                 # pass the keyword variables
@@ -67,7 +87,7 @@ def convert(func):
                 line_renew = processVerilogLine(stripped_line)
                 line_renew_str = processVerilogLine_str(stripped_line)
                 new_func_code.append(
-                    ' ' * (len(line) - len(stripped_line) - 1) + line_renew_str + '\n')
+                    ' ' * (len(line) - len(stripped_line)) + line_renew_str + '\n')
             elif STATE == 'BEGIN_VERILOG_INST':
                 flag_end_inst = 1
                 inst_code.append(line + '\n')
@@ -90,15 +110,25 @@ def convert(func):
         new_func_code.append("    return v_declaration, v_module_dict_list")
         new_func_body = ''.join(new_func_code[0:])
         local_vars = {}
-        exec(new_func_body, func.__globals__, local_vars)  # 执行新函数代码
+        # print(new_func_body)
+        exec(new_func_body, func.__globals__, local_vars)
         func_new = local_vars['func_new']
         verilog_code, module_dict_list = func_new(*args, **kwargs)
+        inst_verilog_code = str()
         module_dict_tree = dict()
-        module_generated, module_file_name, inst_idx_str = moduleloader.generate_module(abstract_module_name, python_vars_dict, verilog_code)
-        inst_verilog_code, module_name_tmp = instantiate_full(verilog_code, kwargs, module_file_name, inst_idx_str)
-        module_dict_tree[module_file_name] = module_dict_list
-        moduleloader.generate_file_tree(module_dict_tree)
-        # pass the instantiation information to the singleton module
-        moduleloader.add_module_inst_info(inst_verilog_code, verilog_code, module_dict_tree, concrete_module_name, func_name)
+        if flag_inst:
+            module_generated, module_file_name, inst_idx_str = moduleloader.generate_module(abstract_module_name,
+                                                                                            python_vars_dict,
+                                                                                            verilog_code)
+            inst_verilog_code, module_name_tmp = instantiate_full(verilog_code, kwargs, module_file_name, inst_idx_str)
+            module_dict_tree[module_file_name] = module_dict_list
+            moduleloader.generate_file_tree(module_dict_tree)
+            # pass the instantiation information to the singleton module
+            moduleloader.add_module_inst_info(inst_verilog_code, verilog_code, module_dict_tree, concrete_module_name,
+                                              func_name)
+        else:
+            moduleloader.add_module_inst_info(inst_verilog_code, verilog_code, module_dict_tree, concrete_module_name,
+                                              func_name)
+
     return decorated
 
