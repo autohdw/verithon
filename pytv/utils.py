@@ -35,7 +35,7 @@ def isModuleFunc(line):
     line = line.strip()
     func_names = []
     func_name = str()
-    if "def" in line:
+    if "def" in line.split():
         return is_mf
     if line.startswith('#'):
         return is_mf
@@ -156,15 +156,30 @@ def parseVerilog_inst_block(kwargs, module_file_name_in, inst_idx_str):
 
 # process the python function for instantiating a verilog module by adding the return value
 def processVerlog_inst_line(inst_line):
+    isinst = True
     # print(inst_line)
+    # inst_line = str()
+    inst_line_noblk = inst_line.replace(" ","")
+    inst_line_noblk = inst_line_noblk.replace("\'","")
+    inst_line_noblk = inst_line_noblk.replace("\"", "")
+    if "OUTMODE=PRINT" in inst_line_noblk:
+        isinst = False
     inst_line_strip = inst_line.strip()
     n_blanks = len(inst_line) - len(inst_line_strip)
     # print(n_blanks)
-    inst_line_renew0 = " " * (n_blanks-1) + inst_line_strip + "\n"
-    inst_line_renew1 = " " * (n_blanks-1) + 'v_inst_code_in, v_declaration_in, module_dict_tree_in, module_file_name_in = '+ 'moduleloader.extract_module_inst_info()' + "\n"
-    inst_line_renew2 = " " * (n_blanks-1) + f"v_module_dict_list.append(module_dict_tree_in) \n"
-    inst_line_renew3 = " " * (n_blanks-1) + f"v_declaration = v_declaration + v_inst_code_in \n"
-    inst_line_renew = inst_line_renew0 + inst_line_renew1 + inst_line_renew2 + inst_line_renew3
+    if isinst:
+        inst_line_renew0 = " " * (n_blanks) + inst_line_strip + "\n"
+        inst_line_renew1 = " " * (
+            n_blanks) + 'v_inst_code_in, v_declaration_in, module_dict_tree_in, module_file_name_in = ' + 'moduleloader.extract_module_inst_info()' + "\n"
+        inst_line_renew2 = " " * (n_blanks) + f"v_module_dict_list.append(module_dict_tree_in) \n"
+        inst_line_renew3 = " " * (n_blanks) + f"v_declaration = v_declaration + v_inst_code_in \n"
+        inst_line_renew = inst_line_renew0 + inst_line_renew1 + inst_line_renew2 + inst_line_renew3
+    else:
+        inst_line_renew0 = " " * (n_blanks) + inst_line_strip + "\n"
+        inst_line_renew1 = " " * (
+            n_blanks) + 'v_inst_code_in, v_declaration_in, module_dict_tree_in, module_file_name_in = ' + 'moduleloader.extract_module_inst_info()' + "\n"
+        inst_line_renew2 = " " * (n_blanks) + f"v_declaration = v_declaration + v_declaration_in \n"
+        inst_line_renew = inst_line_renew0 + inst_line_renew1 + inst_line_renew2
     return inst_line_renew
 
 
