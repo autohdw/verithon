@@ -1,4 +1,4 @@
-# New PyTv 
+# Verithon (New PyTV)
 ## Grammar
 ### Magic Comment Output
 1. Every verilog line should follow a magic comment: `#/`.  
