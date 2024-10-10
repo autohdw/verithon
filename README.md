@@ -42,12 +42,47 @@
             ModuleBasic(p1=rst1, p2=-10, PORTS=["PORTA"])
             ModuleBasic(p1=1, p2=1, PORTS=inst_ports_dict)
    ```
-4. Constraints:
-   - The function param `PORTS` does not appear in the user's definition of the python function. It's a parameter added to the function by the decorator `pytv`. Unless you are instantiating a top module, you should assign value to this parameter (otherwise you will see warning message). Value assigned to this param can either be a  python `list` or  `dict`. It is **NOT** allowed to assign `PORTS` with a string.
-   - The function param `INST_NAME` is not compulsory. Actually, we recommend the users to uuse automatic inst naming. (If this `INST_NAME` is not assigned a value, pytv will automatically name the instance the module)
-   - The function param `MODULE_NAME` is supported but we strongly recommend the users to avoid using it because its usage may potentially corrupt the naming space in pytv.
+4. Instantiation Constraints:
+   - `PORTS`: The function param `PORTS` does not appear in the user's definition of the python function. It's a parameter added to the function by the decorator `pytv`. Unless you are instantiating a top module, you should assign value to this parameter (otherwise you will see warning message). Value assigned to this param can either be a  python `list` or  `dict`. It is **NOT** allowed to assign `PORTS` with a string.
+   - `INST_NAME`: The function param `INST_NAME` is not compulsory. Actually, we recommend the users to uuse automatic inst naming. (If this `INST_NAME` is not assigned a value, pytv will automatically name the instance the module)
+   - `MODULE_NAME`: The function param `MODULE_NAME` is supported but we strongly recommend the users to avoid using it because its usage may potentially corrupt the naming space in pytv.
+   - `OUTMODE`: **DO NOT** pass this argument in normal instantiation. If you want to directly print the module code in the upstream module (rather than save it in a module file), set `OUTMODE='PRINT'`.
    - Before generating instantiation code in the upper module, pytv will check whether the number of ports in the list/dict assigned to `PORTS` matches the ports in the module to be instantiated. If mismatch is found, pytv will throw an exception and terminate code generation. So make sure you have passed correct value to `PORTS`.
    - All parameters should be passed in the **keyword argument** format, but the order in which you pass the arguments can be switched.
+   - Default Parameters: verithon 0.3 and later supports default arguments. But you are still required to pass default arguments in keyword argument format if you want to modify their values in a module function call. Again, the order in which you pass the arguments do not matter.
+
+### Output your code directly to the upper module
+1. Verithon 0.3 and later enable directly outputing your code to the upstream module (rather than only outputing the instantiation code and save the module code in an independent file). The grammar is: `ModuleYOUR_MODULE_TO_PRINT (param1 = p1, param2 = p2, paramN = pN, PORTS = PORTS_DICT, INST_NAME = MY_INST_NAME, OUTMODE='PRINT')`. The grammar for printing the code is identical to the grammar for instantiation, except that you should pass an additional `OUTMODE` argument and set its value to be `'PRINT'`. However, this is a recently developed feature and there is some constraints.
+2. Constraints:
+- We are not sure whether you can include instantiation in the code that you want to output. This may potentially corrupt the naming space.
+- In verithon v0.3, when passing the argument `OUTMODE`, you have to write `OUTMODE`=`'PRINT'` or `OUTMODE="PRINT"`. But you should not write like: `flag='PRINT',OUTMODE=flag`.
+3. An example for verilog code direct output:
+  ```python
+     ModuleBasic(p1=1, p2=1, PORTS=inst_ports_dict)
+     ModuleBasic(p1=rst1, p2=-10, PORTS=["PORTA"])
+     ModuleBasic(p1=1, p2=15, PORTS=inst_ports_dict)
+     # Direct Output
+     ModuleMyPrint(p=500,q=600,i=i,OUTMODE = 'PRINT')
+  ```
+  In the code above, the call of `ModuleMyPrint` is used to directly output the code generated within `ModuleMyPrint`. `ModuleMyPrint` is a module function decorated with `@convert`. Here is its definition:
+  ```python
+     @convert
+     def ModuleMyPrint(p,q,i,myQu = QuType(100,200)):
+         #/ reg [`p`:0] print_port1_`i`;
+         #/ reg [`q`:0] print_port2_`i`;
+         #/ reg [`myQu.DWT`:0] print_port_qu_`i`;
+     pass
+  ```
+  The generated verilog code is:
+  ```verilog
+     Basic0000000001  u_0000000002_Basic0000000001(.PORT1(name_port1), .PORT2(name_port2));
+     Basic0000000003  u_0000000001_Basic0000000003(.portBA1(PORTA));
+     Basic0000000004  u_0000000001_Basic0000000004(.PORT1(name_port1), .PORT2(name_port2));
+     reg [500:0] print_port1_1;
+     reg [600:0] print_port2_1;
+     reg [100:0] print_port_qu_1;
+  ```
+  The first 3 lines are from normal instantiation, while the later 3 lines are from direct output.
 
 ### Auto Naming with PyTV
 PyTV enables auto naming of modules, module files and instances. Auto-naming is done whenever a module function is called without the argument `MODULE_NAME` or `INST_NAME`. There are 3 naming modes to choose from (`HASH`, `MD5_SHORT`, `SEQUENTIAL`). `SEQUENTIAL` is the most recommended naming mode.
@@ -129,6 +164,6 @@ Note that these api functions must be called **before** you call a pytv module f
 
 ## Output
 1. You can find the generated module files in the folder `your_root_dir\\RTL_GEN`.
-2. You can find the saved module parameters in the folder `your_root_dir\\PARAMS`.
+2. You can extract param directly in the python level by calling `moduleloader.getParams(YOUR_MODULE_NAME)`. This will return a dict if the argument `YOUR_MODULE_NAME` is a specific module name (such as `TOP0000000001`), or return a list of dict if `YOUR_MODULE_NAME` is an abstract module name (such as `TOP`).
 3. You can view info and warning messages in the terminal.
 
