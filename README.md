@@ -150,9 +150,9 @@ Verithon provides various api functions for users to manually set naming mode, d
 
 ## Running pytv for generating RTL code
 ### Install pytv with pip
-We have renamed this package as `verithon`. Run the following command to install:
+We have renamed this package as `verithon`. Run the following command to install the latest version:
 ```shell
-pip install verithon
+pip install verithon --upgrade
 ```
 
 ### Import Modules
