@@ -79,7 +79,8 @@ PyTV enables auto naming of modules, module files and instances. Auto-naming is 
 1. Verithon 0.3 and later enable directly outputing your code to the upstream module (rather than only outputing the instantiation code and save the module code in an independent file). The grammar is: `ModuleYOUR_MODULE_TO_PRINT (param1 = p1, param2 = p2, paramN = pN, PORTS = PORTS_DICT, INST_NAME = MY_INST_NAME, OUTMODE='PRINT')`. The grammar for printing the code is identical to the grammar for instantiation, except that you should pass an additional `OUTMODE` argument and set its value to be `'PRINT'`. However, this is a recently developed feature and there is some constraints.
 2. Constraints:
 - We are not sure whether you can include instantiation in the code that you want to output. This may potentially corrupt the naming space.
-- In verithon v0.3, when passing the argument `OUTMODE`, you have to write `OUTMODE`=`'PRINT'` or `OUTMODE="PRINT"`. But you should not write like: `flag='PRINT',OUTMODE=flag`.
+- In verithon v0.3, when passing the argument `OUTMODE`, you have to write `OUTMODE`=`'PRINT'` or `OUTMODE="PRINT"`. But you should not write like: `flag='PRINT' 
+     OUTMODE=flag`.
 3. An example for verilog code direct output:
   ```python
      ModuleBasic(p1=1, p2=1, PORTS=inst_ports_dict)
@@ -127,6 +128,7 @@ Verithon provides various api functions for users to manually set naming mode, d
    - Function: returns the python layer params of a specified module or abstract module
    - Argument Type: `string`
    - Return value: returns a dict if the argument `YOUR_MODULE_NAME` is a specific module name (such as `TOP0000000001`), or a list of dict if `YOUR_MODULE_NAME` is an abstract module name (such as `TOP`).
+   - Call this function only after the specified module is generated. 
    - An example for calling `getParams`:
      ```python
         params_of_basic = moduleloader.getParams("Basic")
@@ -166,7 +168,7 @@ from pytv import moduleloader
 You can run pytv with the following shell script:
 ```shell
 cd "C:\your\path"
-python your_pytv_file.py --naming_mode HASH --root_dir "C:\your\root_dir" --flag_save_param --disable_warning
+python your_pytv_file.py --naming_mode HASH --root_dir "C:\your\root_dir"  --disable_warning
 ```
 ### Configuring command line arguments
 Meaning of each command line argument is presented below:
@@ -181,13 +183,7 @@ Meaning of each command line argument is presented below:
    - **Meaning**: Specifies the path where RTL files will be saved.
    - **Possible Values**: Any valid folder path. The user must either pass this argument in command line or set moduleloader.root_dir with api functions. Otherwise, exceptions will be raised and RTL code generation will not start.
 
-3. `--flag_save_param`
-   - **Meaning**: Indicates whether to save the parameter file.
-   - **Possible Values**:
-     - `store_true`: If this parameter is present, the parameter file will be saved.
-     - Default is `False` if this parameter is not provided.
-
-4. `--disable_warning`
+3. `--disable_warning`
    - **Meaning**: Indicates whether to disable warnings (if true, pytv will display no warnings).
    - **Possible Values**:
      - `store_true`: If this parameter is present, the warnings will be dis-enabled.
@@ -197,8 +193,8 @@ Meaning of each command line argument is presented below:
 If you want to run your pytv file without command line, you can configure root directory, naming, saving and warning settings with api functions of pytv. Examples of usage are presented below:
 1. `moduleloader.set_naming_mode("SEQUENTIAL")`
 2. `moduleloader.set_root_dir("C:\信道编码\SummerSchool\提交")`
-3. `moduleloader.saveParams()`
-4. `moduleloader.disEnableWarning()`
+3. `moduleloader.disEnableWarning()`
+4. `moduleloader.getParams("MUL0000000001")`
 Note that these api functions must be called **before** you call a pytv module function.
 
 ## Output
