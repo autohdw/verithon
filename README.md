@@ -50,8 +50,32 @@
    - Before generating instantiation code in the upper module, pytv will check whether the number of ports in the list/dict assigned to `PORTS` matches the ports in the module to be instantiated. If mismatch is found, pytv will throw an exception and terminate code generation. So make sure you have passed correct value to `PORTS`.
    - All parameters should be passed in the **keyword argument** format, but the order in which you pass the arguments can be switched.
    - Default Parameters: verithon 0.3 and later supports default arguments. But you are still required to pass default arguments in keyword argument format if you want to modify their values in a module function call. Again, the order in which you pass the arguments do not matter.
+### Auto Naming with PyTV
+PyTV enables auto naming of modules, module files and instances. Auto-naming is done whenever a module function is called without the argument `MODULE_NAME` or `INST_NAME`. There are 3 naming modes to choose from (`HASH`, `MD5_SHORT`, `SEQUENTIAL`). `SEQUENTIAL` is the most recommended naming mode.
+#### Setting naming mode
+1. PyTV provides an api for specifying naming mode:
+   ```python
+       moduleloader.set_naming_mode("SEQUENTIAL")
+   ```
+3. You can also set naming mode by passing args in command line:
+   ```shell
+       --naming_mode "SEQUENTIAL"
+   ```
 
-### Output your code directly to the upper module
+#### Auto Naming Rules
+1. Naming of modules or module files
+   - Whether to generate new module: Every time a module function is called, pytv reads the python level params and inspects whether the params overlap with some earlier calls. If overlap is found, pytv will not generate a new module file.
+   - Naming newly generated module: The module name in pytv is formulated as `abstract_module_name + module_identifier`. `abstract_module_name` is read from the name of the module function. `module_identifier` is auto-generated according to certain rules to distinguish between different modules. In `SEQUENTIAL` naming mode, `module_identifier` is a 10-digit hexadecimal number. In `HASH` mode, `module_identifier` is a hash value of the python layer params the module function received. In `MD5_SHORT` mode, `module_identifier` is a cut MD5 value of the python layer params.
+2. Naming of instances
+   - Instances are named according to the module they belong to. To avoid naming conflict across different instances, there is also an instance sequence number included in the instance names.
+   - The instance name is formulated as: `u_sequence_number_module_name`.
+3. An example for naming of module and instance.
+   - pytv line: `ModuleBasic(p1=1, p2=1, PORTS=inst_ports_dict)`
+   - generated module name: `Basic0000000001`
+   - generated module file name: `Basic0000000001.v`
+   - generated instance name: `Basic0000000001  u_0000000002_Basic0000000001` (This is 2nd time that the module function ModuleBasic is called with the same python layer params)
+
+## Output your code directly to the upper module
 1. Verithon 0.3 and later enable directly outputing your code to the upstream module (rather than only outputing the instantiation code and save the module code in an independent file). The grammar is: `ModuleYOUR_MODULE_TO_PRINT (param1 = p1, param2 = p2, paramN = pN, PORTS = PORTS_DICT, INST_NAME = MY_INST_NAME, OUTMODE='PRINT')`. The grammar for printing the code is identical to the grammar for instantiation, except that you should pass an additional `OUTMODE` argument and set its value to be `'PRINT'`. However, this is a recently developed feature and there is some constraints.
 2. Constraints:
 - We are not sure whether you can include instantiation in the code that you want to output. This may potentially corrupt the naming space.
@@ -84,30 +108,45 @@
   ```
   The first 3 lines are from normal instantiation, while the later 3 lines are from direct output.
 
-### Auto Naming with PyTV
-PyTV enables auto naming of modules, module files and instances. Auto-naming is done whenever a module function is called without the argument `MODULE_NAME` or `INST_NAME`. There are 3 naming modes to choose from (`HASH`, `MD5_SHORT`, `SEQUENTIAL`). `SEQUENTIAL` is the most recommended naming mode.
-#### Setting naming mode
-1. PyTV provides an api for specifying naming mode:
-   ```python
-       moduleloader.set_naming_mode("SEQUENTIAL")
-   ```
-3. You can also set naming mode by passing args in command line:
-   ```shell
-       --naming_mode "SEQUENTIAL"
-   ```
+## API functions of verithon
+Verithon provides various api functions for users to manually set naming mode, disenable warning, set save path and view arguments of module functions (params). The api functions are hereby explained in detail:
+1. `moduleloader.set_naming_mode(YOUR_NAMING_MODE)`
+   - Function: sets the naming mode of instances & modules & module files.
+   - Argument Type: `string`
+   - Argument Value:
+     - `'HASH'`: Uses a hash value as part of the filename (default).
+     - `'MD5_SHORT'`: Uses a shortened MD5 value as part of the filename.
+     - `'SEQUENTIAL'`: Uses a sequential number as part of the filename.
+   - `'SEQUENTIAL'` naming is recommended.
 
-#### Auto Naming Rules
-1. Naming of modules or module files
-   - Whether to generate new module: Every time a module function is called, pytv reads the python level params and inspects whether the params overlap with some earlier calls. If overlap is found, pytv will not generate a new module file.
-   - Naming newly generated module: The module name in pytv is formulated as `abstract_module_name + module_identifier`. `abstract_module_name` is read from the name of the module function. `module_identifier` is auto-generated according to certain rules to distinguish between different modules. In `SEQUENTIAL` naming mode, `module_identifier` is a 10-digit hexadecimal number. In `HASH` mode, `module_identifier` is a hash value of the python layer params the module function received. In `MD5_SHORT` mode, `module_identifier` is a cut MD5 value of the python layer params.
-2. Naming of instances
-   - Instances are named according to the module they belong to. To avoid naming conflict across different instances, there is also an instance sequence number included in the instance names.
-   - The instance name is formulated as: `u_sequence_number_module_name`.
-3. An example for naming of module and instance.
-   - pytv line: `ModuleBasic(p1=1, p2=1, PORTS=inst_ports_dict)`
-   - generated module name: `Basic0000000001`
-   - generated module file name: `Basic0000000001.v`
-   - generated instance name: `Basic0000000001  u_0000000002_Basic0000000001` (This is 2nd time that the module function ModuleBasic is called with the same python layer params)
+2. `moduleloader.set_root_dir(YOUR_ROOT_DIR)`
+   - Function: sets the path to save the generated RTL files.
+   - Argument Type: `string`.
+     
+3. `moduleloader.getParams(YOUR_MODULE_NAME)`
+   - Function: returns the python layer params of a specified module or abstract module
+   - Argument Type: `string`
+   - Return value: returns a dict if the argument `YOUR_MODULE_NAME` is a specific module name (such as `TOP0000000001`), or a list of dict if `YOUR_MODULE_NAME` is an abstract module name (such as `TOP`).
+   - An example for calling `getParams`:
+     ```python
+        params_of_basic = moduleloader.getParams("Basic")
+        params_of_mul1 = moduleloader.getParams("MUL0000000001")
+     ```
+     The extracted params would be:
+     ```python
+        params_of_basic = [{'Basic0000000001': {'p1': 1, 'p2': 1}},
+                           {'Basic0000000002': {'p1': 5, 'p2': 6}},
+                           {'Basic0000000003': {'p1': 1, 'p2': -10}},
+                           {'Basic0000000004': {'p1': 1, 'p2': 15}}]
+        params_of_mul1 = {'param1': 29, 'param2': 1, 'paramN': 1,
+                          'Qu_inst': <mycls.QuType object at 0x000001CDE55D0A00>,
+                          'defaultp': 99}
+     ```
+     Observe that the function returns a list of dict for argument `Basic` (an abstract module name) and a dict for argument `MUL0000000001` (a real module name).
+4. `moduleloader.disEnableWarning()`
+   - Function: Disenable warning messages.
+   - Argument Type: This function takes no arguments.
+   - Some critical warnings cannot be disenabled.
 
 ## Running pytv for generating RTL code
 ### Install pytv with pip
