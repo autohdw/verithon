@@ -1,0 +1,11 @@
+LICENSE
+README.md
+setup.py
+pytv/Converter.py
+pytv/ModuleLoader.py
+pytv/__init__.py
+pytv/utils.py
+verithon.egg-info/PKG-INFO
+verithon.egg-info/SOURCES.txt
+verithon.egg-info/dependency_links.txt
+verithon.egg-info/top_level.txt

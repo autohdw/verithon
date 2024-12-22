@@ -1,3 +1,15 @@
+Metadata-Version: 2.1
+Name: verithon
+Version: 0.5
+Summary: RTL Auto-generation with Verilog Embedded in Python
+Home-page: https://github.com/autohdw/Voldelog.git
+Author: JiaYanXu
+Author-email: jiayanxu@seu.edu.cn
+License: MIT
+Requires-Python: >=3.6
+Description-Content-Type: text/markdown
+License-File: LICENSE
+
 # New PyTv 
 ## Grammar
 ### Magic Comment Output
@@ -109,7 +121,7 @@ Meaning of each command line argument is presented below:
 ### Run with no command line args
 If you want to run your pytv file without command line, you can configure root directory, naming, saving and warning settings with api functions of pytv. Examples of usage are presented below:
 1. `moduleloader.set_naming_mode("SEQUENTIAL")`
-2. `moduleloader.set_root_dir("C:\信道编码\SummerSchool\提交")`
+2. `moduleloader.set_root_dir("C:\淇￠亾缂栫爜\SummerSchool\鎻愪氦")`
 3. `moduleloader.saveParams()`
 4. `moduleloader.disEnableWarning()`
 Note that these api functions must be called **before** you call a pytv module function.
