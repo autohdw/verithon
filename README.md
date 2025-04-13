@@ -15,7 +15,7 @@
    - The function must **not** have any return value (We will support module functions with return values in future releases).
    - -Below is a very short definition of a verilog module using PyTV
      ``` python
-        @pytv
+        @convert
         def ModuleBasic(p1, p2):
             #/ module BASIC(
             if p1 > 0:
@@ -79,7 +79,7 @@ PyTV enables auto naming of modules, module files and instances. Auto-naming is 
 You can run pytv with the following shell script:
 ```shell
 cd "C:\your\path"
-python your_pytv_file.py --naming_mode HASH --root_dir "C:\your\root_dir" --flag_save_param --disable_warning
+python your_pytv_file.py --naming_mode SEQUENTIAL --root_dir "C:\your\root_dir" --flag_save_param --disable_warning
 ```
 ### Configuration command line arguments
 Meaning of each command line argument is presented below:
@@ -87,20 +87,22 @@ Meaning of each command line argument is presented below:
    - **Meaning**: Sets the naming mode for the RTL files.
    - **Possible Values**:
      - `HASH`: Uses a hash value as part of the filename (default).
-     - `MD5_SHORT`: Uses a shortened MD5 value as part of the filename.
+  **[Removed Since PyTV 2.2]**
+     - `MD5_SHORT`: Uses a shortened MD5 value as part of the filename.**[Removed Since PyTV 2.2]**
+  
      - `SEQUENTIAL`: Uses a sequential number as part of the filename.
 
-2. `--root_dir`
+1. `--root_dir`
    - **Meaning**: Specifies the path where RTL files will be saved.
    - **Possible Values**: Any valid folder path. The user must either pass this argument in command line or set moduleloader.root_dir with api functions. Otherwise, exceptions will be raised and RTL code generation will not start.
 
-3. `--flag_save_param`
+2. `--flag_save_param`**[Currently not supported]**
    - **Meaning**: Indicates whether to save the parameter file.
    - **Possible Values**:
      - `store_true`: If this parameter is present, the parameter file will be saved.
      - Default is `False` if this parameter is not provided.
 
-4. `--disable_warning`
+3. `--disable_warning`
    - **Meaning**: Indicates whether to disable warnings (if true, pytv will display no warnings).
    - **Possible Values**:
      - `store_true`: If this parameter is present, the warnings will be dis-enabled.
@@ -110,12 +112,47 @@ Meaning of each command line argument is presented below:
 If you want to run your pytv file without command line, you can configure root directory, naming, saving and warning settings with api functions of pytv. Examples of usage are presented below:
 1. `moduleloader.set_naming_mode("SEQUENTIAL")`
 2. `moduleloader.set_root_dir("C:\信道编码\SummerSchool\提交")`
-3. `moduleloader.saveParams()`
+3. `moduleloader.saveParams()`**[Currently not supported]**
 4. `moduleloader.disEnableWarning()`
 Note that these api functions must be called **before** you call a pytv module function.
 
 ## Output
-1. You can find the generated module files in the folder `your_root_dir\\RTL_GEN`.
-2. You can find the saved module parameters in the folder `your_root_dir\\PARAMS`.
-3. You can view info and warning messages in the terminal.
+1. You can find the generated module files in the folder `your_root_dir`.
 
+2. You can view info and warning messages in the terminal.
+
+# PyTV Speedup
+PyTV enables speedup of verilog generation since **PyTV 2.1**. PyTV generates verilog modules over **100** times faster than PyTV 1.2. **Look ahead** speedup is supported since **PyTV 2.2**, which further shortens the module generation time by approx. 60%.
+
+## How to use PyTV Speedup
+1. Install PyTV 2.1 or higher.
+2. Normal speedup is enabled by default since PyTV 2.1 and cannot be disabled.
+3. With PyTV 2.2 or higher, look ahead speedup is enabled by calling `moduleloader.set_look_ahead_speedup(True)` **before importing any modules decorated with `@convert`**. Look ahead speedup is disabled by default. An example of usage is presented below:
+```python
+import pytv
+from pytv.Converter import convert
+from pytv.ModuleLoader import moduleloader
+import sys
+from os.path import dirname, abspath
+
+sys.path.append(dirname(dirname(__file__)))
+sys.path.append(dirname(__file__))
+from PyTU import QuMode, OfMode, QuType
+
+
+moduleloader.set_look_ahead_speedup(True)
+import math
+
+from Delay import ModuleDelay
+from FxMatch import ModuleFxMatch
+from Mul import ModuleMul
+from Add import ModuleAdd
+from Sub import ModuleSub
+from AdderTree import ModuleAdderTree
+```
+
+
+# PyTV Debug Mode
+PyTV enables debug mode since **PyTV 1.2**. In the previous PyTV versions, PyTV cannot loacate errors that occur when generating bottom modules. Debug mode can locate errors that occur either at compile time or runtime. Debug mode can be enabled by calling `moduleloader.set_debug_mode(True)` . With debug mode enabled, PyTV will display the error message with the line number where the error occured. Traceback to the top module function call is also displayed.
+
+   
