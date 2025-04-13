@@ -29,6 +29,7 @@ class ModuleLoader:
             raise Exception("The current Verithon version has removed support for .json params saving")
         self.abstract_module_list = []
         self.module_func_list = []
+        self.module_function_definition_dict= {}
         self.module_file_name_list = dict()
         self.aux_module_file_name_list = dict()
         self.rtl_folder_name = "RTL_GEN"
@@ -51,7 +52,25 @@ class ModuleLoader:
         self.disable_warning = disable_warning
         self.module_params = dict()
         self.nested_module_params = dict()
+        self.module_verilog_code=dict()
+        # dictionary for storing module port definitions; key is module_name + hash value of param string
+        self.module_verilog_ports = dict()
         self.language = "VERILOG"
+        self.debug_mode = True
+        self.look_ahead_speedup = False
+
+        # For compile time optimization
+        # dict for storing lines with irrelevant variables, key is abstract module name
+        self.irrelevant_lineno_dict = dict()
+        self.irrelevant_lineno_aux_module_dict = dict()
+
+        # For test
+        self.module_generation_time = 0
+        self.module_instantiate_time = 0
+        self.add_module_inst_info_time = 0
+        self.judge_module_exist_time = 0
+        self.n_func_new_enter = 0
+        # For test
 
     def __new__(cls, *args, **kwargs):
         if cls.__isinstance:
@@ -73,7 +92,7 @@ class ModuleLoader:
 
     # load the module based on the abstract module name and the parameter value
     # returns a boolean value to indicate whether the module is already generated or not, and the module file name
-    def load_module(self, abstract_module_name, module_param_dict):
+    def load_module(self, abstract_module_name, module_param_dict, module_verilog_code="", module_file_name_aux=str()):
         moduleExists = True
         module_param_dict_cut = dict()
         for key in module_param_dict.keys():
@@ -86,7 +105,8 @@ class ModuleLoader:
             self.aux_module_file_name_list[abstract_module_name] = []
             self.nested_module_params[abstract_module_name] = []
         module_file_name = abstract_module_name
-        module_file_name, module_file_name_aux = self.generate_module_file_name(abstract_module_name, module_param_dict)
+        module_file_name = self.generate_module_file_name(abstract_module_name)
+        self.module_verilog_code[module_file_name_aux] = module_verilog_code
         # if self.naming_mode == 'HASH':
         #     hash_val = self.generate_dict_hash(module_param_dict)
         #     module_file_name += hash_val
@@ -99,38 +119,74 @@ class ModuleLoader:
             self.module_params[module_file_name] = module_param_dict_cut
             self.nested_module_params[abstract_module_name].append({module_file_name:module_param_dict_cut})
         else:
+            # print(f"XXXXXXXXXX")
             self.inst_idx[module_file_name_aux] += 1
+            # print(self.inst_idx[module_file_name_aux])
             module_index = self.aux_module_file_name_list[abstract_module_name].index(module_file_name_aux)
             module_file_name = self.module_file_name_list[abstract_module_name][module_index]
         inst_idx_out_str = self.int_to_hex_string(self.inst_idx[module_file_name_aux]+1)
         return moduleExists, module_file_name, inst_idx_out_str
 
 
-    def generate_module_file_name(self,abstract_module_name,module_param_dict_in):
+    def generate_module_file_name(self,abstract_module_name):
+        # module_param_dict = dict()
+        # for key in module_param_dict_in.keys():
+        #     if (not key == "PORTS") and (not key == 'INST_NAME') and (not key == 'MODULE_NAME'):
+        #         val_ori =  module_param_dict_in[key]
+        #         val_in_byte = pickle.dumps(val_ori)
+        #         val_in_str = base64.b64encode(val_in_byte).decode('utf-8')
+        #         module_param_dict[key] = module_param_dict_in[key] = val_in_str
+        module_file_name = abstract_module_name
+        # print(f"abstract_module_name in moduleloader:{abstract_module_name}")
+        naming_mode = self.naming_mode
+        # module_param_dict.pop('INST_NAME', None)
+        # module_param_dict.pop('PORTS',None)
+        #param_string = self.dict_to_string(module_param_dict)
+        module_file_name_aux = str()
+        # if naming_mode == 'HASH':
+        #     module_file_name += self.get_hash(param_string)
+        #     module_file_name_aux = module_file_name
+        # elif naming_mode == 'MD5_SHORT':
+        #     module_file_name += self.get_short_md5(param_string)
+        #     module_file_name_aux = module_file_name
+        if naming_mode == 'SEQUENTIAL':
+            #module_file_name_aux = module_file_name + self.get_hash(param_string)
+            naming_cnt = len(self.module_file_name_list[abstract_module_name])+1
+            module_file_name += self.int_to_hex_string(naming_cnt)
+        # print(f"module_file_name_aux in moduleloader:{module_file_name_aux}")
+        # print(f"param string in moduleloader: {param_string}")
+        return module_file_name#, module_file_name_aux
+
+    def judge_module_exists(self, abstract_module_name, module_param_dict_in):
+        moduleExists = False
         module_param_dict = dict()
         for key in module_param_dict_in.keys():
             if (not key == "PORTS") and (not key == 'INST_NAME') and (not key == 'MODULE_NAME'):
-                val_ori =  module_param_dict_in[key]
+                val_ori = module_param_dict_in[key]
                 val_in_byte = pickle.dumps(val_ori)
                 val_in_str = base64.b64encode(val_in_byte).decode('utf-8')
                 module_param_dict[key] = module_param_dict_in[key] = val_in_str
         module_file_name = abstract_module_name
-        naming_mode = self.naming_mode
+        # naming_mode = self.naming_mode
         # module_param_dict.pop('INST_NAME', None)
         # module_param_dict.pop('PORTS',None)
         param_string = self.dict_to_string(module_param_dict)
+        module_file_name_aux = abstract_module_name+self.get_hash(param_string)
+        if abstract_module_name in self.aux_module_file_name_list.keys():
+            if module_file_name_aux in self.aux_module_file_name_list[abstract_module_name]:
+                moduleExists = True
+        # print(f"module_file_name_aux in decorator:{module_file_name_aux}")
+        # print(f"param string in decorator: {param_string}")
+        return moduleExists, module_file_name_aux
+
+    def judge_module_exists_optimized(self, top_func_name, lineno):
+        module_exists = False
         module_file_name_aux = str()
-        if naming_mode == 'HASH':
-            module_file_name += self.get_hash(param_string)
-            module_file_name_aux = module_file_name
-        elif naming_mode == 'MD5_SHORT':
-            module_file_name += self.get_short_md5(param_string)
-            module_file_name_aux = module_file_name
-        elif naming_mode == 'SEQUENTIAL':
-            module_file_name_aux = module_file_name + self.get_hash(param_string)
-            naming_cnt = len(self.module_file_name_list[abstract_module_name])+1
-            module_file_name += self.int_to_hex_string(naming_cnt)
-        return module_file_name, module_file_name_aux
+        if lineno in self.irrelevant_lineno_aux_module_dict[top_func_name].keys():
+            module_exists = True
+            module_file_name_aux = self.irrelevant_lineno_aux_module_dict[top_func_name][lineno]
+        return module_exists, module_file_name_aux
+
 
     def dict_to_string(self, input_dict):
         # 将字典转为 JSON 字符串
@@ -164,12 +220,13 @@ class ModuleLoader:
 
     # writes the module verilog code to the file
     # returns a boolean value to indicate whether the module is generated or not
-    def generate_module(self, abstract_module_name, module_param_dict, module_verilog_code):
+    def generate_module(self, abstract_module_name, module_param_dict, module_verilog_code, module_exists=False, module_file_name_aux=str()):
+        # print(f"module_exists:{module_exists}")
         if not self.root_dir:
             raise Exception("Error:Unspecified root directory.")
         moduleGenerated = False
-        moduleExists, module_file_name,inst_idx_str = self.load_module(abstract_module_name, module_param_dict)
-        if not moduleExists:
+        moduleExists,module_file_name,inst_idx_str = self.load_module(abstract_module_name, module_param_dict, module_verilog_code, module_file_name_aux)
+        if not module_exists:
             suffix = self.get_file_suffix()
             module_file_name_v = module_file_name
             module_file_name_v += suffix
@@ -190,8 +247,10 @@ class ModuleLoader:
         output_str = self.visualize_tree(file_tree_in)
         tree_file_name = "module_structure.txt"
         tree_file_path = os.path.join(self.rtl_folder_path, tree_file_name)
-        with open(tree_file_path, "w") as f:
-            f.write(output_str)
+        if self.language == "VERILOG" or self.language == "verilog":
+            with open(tree_file_path, "w") as f:
+                f.write(output_str)
+
 
     def visualize_tree(self, tree, parent=None, indent='                  '):
         output_str = str()
@@ -222,6 +281,13 @@ class ModuleLoader:
 
     def set_language_mode(self,my_language):
         self.language = my_language
+
+    def set_debug_mode(self,my_mode):
+        self.debug_mode = my_mode
+
+    def set_look_ahead_speedup(self, mode:bool):
+        self.look_ahead_speedup = mode
+
 
     def get_file_suffix(self):
         if self.language == "CPP" or self.language == "cpp":
@@ -262,6 +328,7 @@ class ModuleLoader:
             self.module_func_list.append(module_func_name)
         return modulefuncExists
 
+
     def add_module_inst_info(self, inst_verilog_code, verilog_code, module_dict_tree, concrete_module_name, func_name):
         self.inst_verilog_code = inst_verilog_code
         self.verilog_code = verilog_code
@@ -272,6 +339,19 @@ class ModuleLoader:
         # print("\n")
         self.add_cnt = self.add_cnt + 1
         # print(self.add_cnt)
+
+    def add_irrelevant_lineno(self,lineno_list,func_name):
+        self.irrelevant_lineno_dict[func_name] = lineno_list
+        self.irrelevant_lineno_aux_module_dict[func_name] = dict()
+        # for lineno in lineno_list:
+        #     self.irrelevant
+
+    def add_irrelevant_aux_name_dict(self, top_func_name, lineno, aux_module_file_name):
+        self.irrelevant_lineno_aux_module_dict[top_func_name][lineno] = aux_module_file_name
+
+
+    def empty_irrelevant_aux_name_dict(self, top_func_name):
+        self.irrelevant_lineno_aux_module_dict[top_func_name]=dict()
 
     def extract_module_inst_info(self):
         return self.inst_verilog_code, self.verilog_code, self.module_dict_tree, self.concrete_module_name
@@ -311,6 +391,24 @@ class ModuleLoader:
         module_dict_list = self.getParams(abstract_module_name)
         latest_module_name = list(module_dict_list[-1].keys())[0]
         return latest_module_name
+
+
+    def reset(self):
+        self.abstract_module_list = []
+        self.module_func_list = []
+        self.module_file_name_list = dict()
+        self.aux_module_file_name_list = dict()
+        self.inst_idx = dict()
+        self.file_tree = dict()
+        self.inst_verilog_code = str()
+        self.verilog_code = str()
+        self.module_dict_tree = dict()
+        self.concrete_module_name = str()
+        self.add_cnt = 0
+        self.module_params = dict()
+        self.nested_module_params = dict()
+
+
 
 
 # 解析命令行参数
