@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='verithon',
-    version='0.5',
+    version='2.2',
     packages=find_packages(),
     description='RTL Auto-generation with Verilog Embedded in Python',
     long_description=open('README.md').read(),
