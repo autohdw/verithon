@@ -12,7 +12,7 @@ PyTV (also known as verithon) is a Python package for flexibly generating verilo
 ### Defining a Verilog Module with PyTV
 1. Every definition of a verilog module is written in magic comments and embodied in the definition of a **python function**.
    - The name of the python function must start with `Module`. The function name is formulated as `Module_abstract_module_name`. In the current PyTV version, please **do not** define a normal function whose name start with `Module`. Also, the module function definition should be written in a **single** line. (We prepare to solve these 2 issues in future releases)
-   - Every module function should be decorated with pytv using `@pytv`. Please write `@pytv` only in the line above each module function definition.
+   - Every module function should be decorated with pytv using `@convert`. Please write `@convert` only in the line above each module function definition.
    - The parameters of the python function can be of any data type.
    - The function must **not** have any return value (We will support module functions with return values in future releases).
    - -Below is a very short definition of a verilog module using PyTV
@@ -50,6 +50,7 @@ PyTV (also known as verithon) is a Python package for flexibly generating verilo
    - The function param `MODULE_NAME` is supported but we strongly recommend the users to avoid using it because its usage may potentially corrupt the naming space in pytv.
    - Before generating instantiation code in the upper module, pytv will check whether the number of ports in the list/dict assigned to `PORTS` matches the ports in the module to be instantiated. If mismatch is found, pytv will throw an exception and terminate code generation. So make sure you have passed correct value to `PORTS`.
    - All parameters should be passed in the **keyword argument** format, but the order in which you pass the arguments can be switched.
+   - A Module function call **MUST STAY IN A SINGLE LINE**.
 
 ### Auto Naming with PyTV
 PyTV enables auto naming of modules, module files and instances. Auto-naming is done whenever a module function is called without the argument `MODULE_NAME` or `INST_NAME`. There are 3 naming modes to choose from (`HASH`, `MD5_SHORT`, `SEQUENTIAL`). `SEQUENTIAL` is the most recommended naming mode.
