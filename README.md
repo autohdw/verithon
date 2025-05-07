@@ -75,11 +75,26 @@ PyTV enables auto naming of modules, module files and instances. Auto-naming is 
    - generated instance name: `Basic0000000001  u_0000000002_Basic0000000001` (This is 2nd time that the module function ModuleBasic is called with the same python layer params)
 
 ## Running pytv for generating RTL code
-### Run with command line
+### Installing PyTV
+Install PyTV with pip with command line:
+```shell
+pip install verithon --upgrade
+```
+The latest version is verithon 2.3.
+
+### Import pytv
+In each file where you intend to use pytv, these lines should be added to import required packages:
+```python
+import pytv
+from pytv.Converter import convert
+from pytv.ModuleLoader import moduleloader
+```
+
+### Run with command line [Not Recommended]
 You can run pytv with the following shell script:
 ```shell
 cd "C:\your\path"
-python your_pytv_file.py --naming_mode SEQUENTIAL --root_dir "C:\your\root_dir" --flag_save_param --disable_warning
+python your_pytv_file.py --naming_mode SEQUENTIAL --root_dir "C:\your\root_dir"  --disable_warning
 ```
 ### Configuration command line arguments
 Meaning of each command line argument is presented below:
