@@ -1,4 +1,6 @@
 # New PyTv 
+## Overview
+PyTV (also known as verithon) is a Python package for flexibly generating verilog code. In PyTV, each verilog module is enclosed in a Python function, called Module functions. Verilog files are generated or instantiated by calling Module functions. Module functions receive arguments that define the verilog ports for instantiation and decide how the corresponding verilog modules are generated. An example of usage can be found in `verithon/examples/M2V/M2V.py`, which generates a verilog module for matrix-vector multiplication.
 ## Grammar
 ### Magic Comment Output
 1. Every verilog line should follow a magic comment: `#/`.  
