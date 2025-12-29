@@ -37,7 +37,33 @@ import sys
 # the decorator replaces func with a newly defined function decorated(*args, **kwargs)
 YELLOW = "\033[1;33m"
 RESET = "\033[0m"
-import time
+
+
+def accumulate_complete_call(src_lines, start_idx):
+    """
+    Accumulate lines starting from start_idx until we have balanced parentheses/braces/brackets.
+    Returns: (complete_line, num_lines_consumed)
+    """
+    accumulated = src_lines[start_idx]
+    paren_count = accumulated.count('(') - accumulated.count(')')
+    brace_count = accumulated.count('{') - accumulated.count('}')
+    bracket_count = accumulated.count('[') - accumulated.count(']')
+    
+    lines_consumed = 1
+    idx = start_idx + 1
+    
+    # Continue accumulating while we have unbalanced brackets
+    while (paren_count > 0 or brace_count > 0 or bracket_count > 0) and idx < len(src_lines):
+        line = src_lines[idx]
+        accumulated += '\n' + line
+        paren_count += line.count('(') - line.count(')')
+        brace_count += line.count('{') - line.count('}')
+        bracket_count += line.count('[') - line.count(']')
+        lines_consumed += 1
+        idx += 1
+    
+    return accumulated, lines_consumed
+
 
 def convert(func):
     #moduleloader.set_look_ahead_speedup(look_ahead_speedup)
@@ -77,8 +103,13 @@ def convert(func):
 
     # definition of the newly generated function for producing v_declaration code
     line_func_def = f"def func_new(*args, **kwargs): \n"
-    for line in src_lines:
+    skip_until_idx = -1
+    for idx, line in enumerate(src_lines):
         i = i + 1
+        
+        # Skip lines that were already processed as part of multi-line call
+        if idx < skip_until_idx:
+            continue
 
         # For debug: line number in the original code
         original_line_number = starting_line+i-1
@@ -129,9 +160,21 @@ def convert(func):
             inst_code.append(line + '\n')
         elif STATE == 'IN_VERILOG_INST':
             if not isVerilogLine(line):
+                # Check if this is a multi-line call by checking for balanced parentheses
+                stripped = line.strip()
+                paren_balance = stripped.count('(') - stripped.count(')')
+                brace_balance = stripped.count('{') - stripped.count('}')
+                bracket_balance = stripped.count('[') - stripped.count(']')
+                
+                # If unbalanced, accumulate lines until balanced
+                if paren_balance > 0 or brace_balance > 0 or bracket_balance > 0:
+                    complete_line, lines_consumed = accumulate_complete_call(src_lines, idx)
+                    skip_until_idx = idx + lines_consumed
+                    line = complete_line
+                
                 if moduleloader.look_ahead_speedup:
                     if i in moduleloader.irrelevant_lineno_dict[func_name]:
-                        line = modify_func_call(line, top_module_name=func_name, line_no=i, starting_line=starting_line)
+                        line = modify_func_call(line, top_module_name=func_name, line_no=i)
 
                 # b = isVerilogLine(line)
                 inst_line_renew = processVerlog_inst_line(line)
@@ -211,7 +254,7 @@ def convert(func):
         top_func_name = str()
         lineno_in_top_func = 0
 
-        #time0 = time.perf_counter()
+        time0 = time.perf_counter()
         if "OUTMODE" in kwargs.keys():
             if kwargs["OUTMODE"] == "PRINT":
                 flag_inst = False
@@ -247,7 +290,7 @@ def convert(func):
                 moduleloader.add_irrelevant_aux_name_dict(top_func_name=top_func_name, lineno=lineno_in_top_func,
                                                           aux_module_file_name=module_file_name_aux)
 
-        #time1 = time.perf_counter()
+        time1 = time.perf_counter()
         python_vars_dict = kwargs.copy()
 
         #print(f"{func_name}:{module_exists}")
@@ -301,36 +344,37 @@ def convert(func):
 
         if flag_inst:
 
-            #timeA = time.perf_counter()
+            timeA = time.perf_counter()
             module_generated, module_file_name, inst_idx_str = moduleloader.generate_module(abstract_module_name,
                                                                                             python_vars_dict,
                                                                                             verilog_code,module_exists,module_file_name_aux)
-            #timeB = time.perf_counter()
+            timeB = time.perf_counter()
             inst_verilog_code, module_name_tmp = instantiate_full(verilog_code, kwargs, module_file_name,
                                                                   inst_idx_str,module_exists, module_file_name_aux)
-            #timeC = time.perf_counter()
+            timeC = time.perf_counter()
             module_dict_tree[module_file_name] = module_dict_list
             # moduleloader.generate_file_tree(module_dict_tree)
             # pass the instantiation information to the singleton module
             moduleloader.add_module_inst_info(inst_verilog_code, verilog_code, module_dict_tree,
                                               concrete_module_name,
                                               func_name)
-            #timeD = time.perf_counter()
+            timeD = time.perf_counter()
 
-            # moduleloader.module_generation_time += (timeB-timeA)
-            # moduleloader.module_instantiate_time += (timeC-timeB)
-            # moduleloader.judge_module_exist_time += (time1-time0)
-            # moduleloader.add_module_inst_info_time += (timeD-timeC)
+            moduleloader.module_generation_time += (timeB-timeA)
+            moduleloader.module_instantiate_time += (timeC-timeB)
+            moduleloader.judge_module_exist_time += (time1-time0)
+            moduleloader.add_module_inst_info_time += (timeD-timeC)
 
-            # if func_name == 'ModuleM2V':
-            #     print(f"module generation time is {moduleloader.module_generation_time: .6f}s")
-            #     print(f"module instantiation time is {moduleloader.module_instantiate_time: .6f}s")
-            #     print(f"module add info time is {moduleloader.add_module_inst_info_time:.6f}s")
-            #     print(f"judge_module_exists_time is {moduleloader.judge_module_exist_time: .6f}s")
-            #     print(f"func_new enter time is {moduleloader.n_func_new_enter}")
+            if func_name == 'ModuleM2V':
+                print(f"module generation time is {moduleloader.module_generation_time: .6f}s")
+                print(f"module instantiation time is {moduleloader.module_instantiate_time: .6f}s")
+                print(f"module add info time is {moduleloader.add_module_inst_info_time:.6f}s")
+                print(f"judge_module_exists_time is {moduleloader.judge_module_exist_time: .6f}s")
+                print(f"func_new enter time is {moduleloader.n_func_new_enter}")
 
         else:
             moduleloader.add_module_inst_info(inst_verilog_code, verilog_code, module_dict_tree, concrete_module_name,
                                               func_name)
 
     return decorated
+
